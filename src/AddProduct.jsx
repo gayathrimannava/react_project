@@ -86,7 +86,7 @@ export default function AddProduct() {
     if (!productId) return;
     setLoading(true);
     axios
-      .get(`http://127.0.0.1:8000/api/products/${productId}/`, baseConfig)
+      .get(`http://127.0.0.1:8000/api/products/${productId}`, baseConfig)
       .then((res) => {
         setName(res.data.name);
         setPrice(res.data.price);
@@ -110,8 +110,8 @@ export default function AddProduct() {
   }
   const data = { name, price: parseFloat(price), description };
   const request = productId
-    ? axios.put(`http://127.0.0.1:8000/api/products/${productId}/`, data, baseConfig)
-    : axios.post("http://127.0.0.1:8000/api/products/", data, baseConfig);
+    ? axios.put(`http://127.0.0.1:8000/api/product/`, {...data,id:productId}, baseConfig)
+    : axios.post("http://127.0.0.1:8000/api/product/", data, baseConfig);
   request
     .then((response) => {
       console.log("Response type:", Array.isArray(response.data) ? "Array (list)" : "Object (single product)");

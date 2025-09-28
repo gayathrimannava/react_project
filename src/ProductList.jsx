@@ -107,8 +107,7 @@ export default function ProductList() {
               <td>
                 {/* Always go to AddProduct page for editing */}
                 <Link
-                  to="/add-product"
-                  state={{ product: p }} // pass product via state
+                  to={`/add-product?id=${p.id}`}
                   className="btn btn-warning btn-sm me-2"
                 >
                   Edit
