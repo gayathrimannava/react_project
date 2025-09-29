@@ -1,145 +1,118 @@
-// import React, { useState, useEffect } from "react";
-// import { Routes, Route } from "react-router-dom";
-// import Login from "./login";
-// import Register from "./register";
-// import ProductList from "./ProductList";
-// import AddProduct from "./AddProduct";
-// import UserList from "./UserList";
-// import AddUser from "./AddUser";
-// import Navbar from "./components/navbar";
-// import Sidebar from "./components/sidebar";
-// import Footer from "./components/footer";
+// // import React from "react";
+// import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom";
+// import LoginPage from "./components/auth/LoginPage";
+// import SignupPage from "./components/auth/SignupPage";
+// import AdminLayout from "./components/admin/AdminLayout";
+// import NotFoundPage from "./pages/NotFoundPage";
 
 // function App() {
-//   const [products, setProducts] = useState([]);
-
-//   // Fetch products from backend
-//   const fetchProducts = () => {
-//     fetch("http://127.0.0.1:8000/api/products/")
-//       .then((res) => res.json())
-//       .then((data) => setProducts(data))
-//       .catch((err) => console.error("Error fetching products:", err));
-//   };
-
-//   useEffect(() => {
-//     fetchProducts();
-//   }, []);
-  
-
 //   return (
-//     <div className="d-flex flex-column min-vh-100">
-//       <Navbar />
-//       <div className="d-flex flex-grow-1">
-//         <Sidebar />
-//         <div className="flex-grow-1 p-3">
-//           <Routes>
-//             <Route path="/" element={<Login />} />
-//             <Route path="/register" element={<Register />} />
-//             <Route
-//               path="/products"
-//               element={<ProductList products={products} />}
-//             />
-//             <Route
-//               path="/add-product"
-//               element={<AddProduct fetchProducts={fetchProducts} />}
-//             />
-            
-//             <Route path="/users" element={<UserList />} />
-//             <Route path="/add-user" element={<AddUser />} />
-//             <Route path="*" element={<h2>Page Not Found</h2>} />
-//           </Routes>
-//         </div>
-//       </div>
-//       <Footer />
-//     </div>
-//   );
-  
+//     <Router>
+//       <Routes>
+//         {/* Authentication Routes */}
+//         <Route path="/login" element={<LoginPage />} />
+//         <Route path="/signup" element={<SignupPage />} />
 
+//         {/* Redirect root to login page */}
+//         <Route path="/" element={<Navigate to="/login" replace />} />
+        
+//         {/* Admin Dashboard Routes (protected) */}
+//         {/* In a real app, this would be a protected route */}
+//         <Route path="/*" element={<AdminLayout />} />
+
+//         {/* Fallback Not Found Route */}
+//         <Route path="*" element={<NotFoundPage />} />
+//       </Routes>
+//     </Router>
+//   );
 // }
 
 // export default App;
 
-
-
-import React, { useState, useEffect, useContext } from "react";
-import { Routes, Route } from "react-router-dom";
-import Navbar from "./components/Navbar";
-import Sidebar from "./components/Sidebar";
-import Footer from "./components/Footer";
-import PrivateRoute from "./components/PrivateRoute"; // import PrivateRoute
-import Login from "./login";
-import Register from "./register";
-import ProductList from "./ProductList";
-import AddProduct from "./AddProduct";
-import UserList from "./UserList";
-import AddUser from "./AddUser";
+import { useContext } from "react";
 import { AuthContext } from "./services/context/AuthContext";
 import axios from "axios";
+import { useState, useEffect } from "react";
 
-function App() {
-  const { token } = useContext(AuthContext);
-  const [products, setProducts] = useState([]);
+export function Home(){
+    const {user, loggedIn, handleLogin, logout } = useContext(AuthContext);
+    const [username, setUsername] = useState("");
+    const [password, setPassword] = useState("");
 
-  const fetchProducts = async () => {
-    try {
-      const response = await axios.get("http://127.0.0.1:8000/api/products/", {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      setProducts(response.data);
-    } catch (err) {
-      console.error(err);
+    const login = async() => {
+        console.log(username, password);
+        let response = await axios.post("http://localhost:8000/api/token/", {
+            username,
+            password
+        });
+        if(response.status === 200){
+            let token = response.data.token;
+            handleLogin(username, token);
+            alert("Login successful");
+        }else{
+            alert("Login failed");
+        }
+    };
+
+    const  handleLogout = () => {
+        logout();
+        alert("Logged out");
     }
-  };
+    return <>
+        <h1>Home Page</h1>
+        <h1>{user}</h1>
+        <h1>{loggedIn}</h1>
 
-  useEffect(() => {
-    if (token) fetchProducts();
-  }, [token]);
 
-  return (
-    <div className="d-flex flex-column min-vh-100">
-      <Navbar />
-      <div className="d-flex flex-grow-1">
-        <Sidebar />
-        <main className="flex-grow-1 p-3">
-          <Routes>
-            <Route path="/" element={<Login />} />
-            <Route path="/register" element={<Register />} />
+        <input placeholder="Username" onChange={(e)=>setUsername(e.target.value)}/>
+        <input placeholder="Password" type="password" onChange={(e)=>setPassword(e.target.value)}/>
 
-            {/* Protected route */}
-            <Route
-              path="/products"
-              element={
-                <PrivateRoute>
-                  <ProductList products={products} />
-                </PrivateRoute>
-              }
-            />
 
-            <Route
-              path="/add-product"
-              element={
-                <PrivateRoute>
-                  <AddProduct fetchProducts={fetchProducts} />
-                </PrivateRoute>
-              }
-            />
+        <button onClick={login}>Login</button>
+        <button onClick={handleLogout}>Logout</button>
 
-            <Route
-              path="/add-user"
-              element={
-                <PrivateRoute>
-                  <AddUser />
-                </PrivateRoute>
-              }
-            />
 
-            <Route path="*" element={<h2>Page Not Found</h2>} />
-          </Routes>
-        </main>
-      </div>
-      <Footer />
-    </div>
-  );
+        { loggedIn && 
+            <>
+                <h2>Welcome, {user}</h2>
+                <Products></Products>
+            </>
+        }
+    </>
 }
 
-export default App;
+function Products() {
+    const [products, setProducts] = useState([]);
+    const { token, user } = useContext(AuthContext);
+
+    const getProducts = async() => {
+
+        console.log("Fetching products with token:", token);
+        let response = await axios.get("http://localhost:8000/api/products/", {
+            headers: {
+                Authorization: `Token ${token}`
+            }
+        });
+        if(response.status === 200){
+            setProducts(response.data);
+        }
+        else{
+            alert("Failed to fetch products");
+            console.log(response);
+        }
+    }
+
+    useEffect(() => {
+        getProducts();
+    }, []);
+
+    
+    return <>
+            <h2>Products</h2>
+            <ul>
+                {products.map(product => (
+                    <li key={product.id}>{product.name}</li>
+                ))}
+            </ul>
+            </>
+}
